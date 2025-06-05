@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Code & Chat Interface</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <script src="https://kit.fontawesome.com/a076d05399.js"
+            crossorigin="anonymous"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+            rel="stylesheet">
+        <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'navy-blue': {
+                            50: '#e3e8f0',
+                            100: '#c7d1e0',
+                            200: '#aabacd',
+                            300: '#8da2b8',
+                            400: '#708aa2',
+                            500: '#53728c',
+                            600: '#425c73',
+                            700: '#32465a',
+                            800: '#223041',
+                            900: '#121a28',
+                            950: '#0a0f17',
+                        }
+                    },
+                    fontFamily: {
+                        'space-mono': ['Space Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+        <style>
+        body {
+            font-family: 'Space Mono', monospace;
+        }
+        .tab-button {
+            transition: all 0.2s ease;
+        }
+        .tab-button:hover {
+            transform: translateY(-2px);
+        }
+        .resize-handle {
+            width: 4px;
+            background-color: rgba(82, 109, 130, 0.5);
+            cursor: col-resize;
+            transition: background-color 0.2s;
+        }
+        .resize-handle:hover {
+            background-color: rgba(82, 109, 130, 0.8);
+        }
+        .resize-handle.active {
+            background-color: rgba(243, 115, 53, 0.8);
+        }
+        @media (max-width: 1023px) {
+            .panel {
+                display: none;
+            }
+            .panel.active {
+                display: flex;
+            }
+        }
+    </style>
+    </head>
+    <body class="bg-navy-blue-950 text-navy-blue-100 md:h-full" x-data="app">
+        <div class="container mx-auto px-4 py-8 h-full flex flex-col">
+            <!-- Header -->
+            <header class="mb-8">
+                <h1
+                    class="text-3xl font-bold tracking-tighter text-orange-500">Code<span
+                        class="text-navy-blue-200">Chat</span></h1>
+                <p class="text-navy-blue-400 tracking-wide">Develop, chat,
+                    preview</p>
+            </header>
+
+            <!-- Mobile Tabs Navigation -->
+            <nav class="flex border-b border-navy-blue-800 mb-6 lg:hidden">
+                <button
+                    @click="activeMobileTab = 'ai-chat'"
+                    :class="{
+                    'text-orange-500 border-b-2 border-orange-500 font-bold': activeMobileTab === 'ai-chat',
+                    'text-navy-blue-300 hover:text-navy-blue-100': activeMobileTab !== 'ai-chat'
+                }"
+                    class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                    <i class="fas fa-comment-dots mr-2"></i>AI Chat
+                </button>
+                <button
+                    @click="activeMobileTab = 'editor'"
+                    :class="{
+                    'text-orange-500 border-b-2 border-orange-500 font-bold': activeMobileTab === 'editor',
+                    'text-navy-blue-300 hover:text-navy-blue-100': activeMobileTab !== 'editor'
+                }"
+                    class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                    <i class="fas fa-code mr-2"></i>Editor
+                </button>
+                <button
+                    @click="activeMobileTab = 'viewer'"
+                    :class="{
+                    'text-orange-500 border-b-2 border-orange-500 font-bold': activeMobileTab === 'viewer',
+                    'text-navy-blue-300 hover:text-navy-blue-100': activeMobileTab !== 'viewer'
+                }"
+                    class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                    <i class="fas fa-eye mr-2"></i>Viewer
+                </button>
+            </nav>
+
+            <!-- Main Content Area -->
+            <div
+                class="flex-grow flex flex-col lg:flex-row h-full overflow-hidden">
+                <!-- AI Chat Panel -->
+                
+                <div class="panel flex flex-col h-full lg:w-1/4 lg:min-w-[300px] lg:max-w-[400px]"
+     x-show="activeMobileTab === 'ai-chat' || activeMobileTab ==='all'"
+     :class="{ 'active': activeMobileTab === 'ai-chat' }"
+     x-ref="chatPanel">
+    <div class="flex-grow flex flex-col">
+        <!-- Chat Display -->
+        
+        <div class="flex-grow bg-navy-blue-900 rounded-lg p-4 mb-4 border border-navy-blue-700 overflow-hidden flex flex-col">
+    <div class="space-y-4 overflow-y-auto max-h-[calc(100vh-65vh)] pr-2 -mr-2" x-ref="chatDisplay">
+        <template x-for="(message, index) in chatMessages" :key="index">
+            <div :class="{
+                'bg-emerald-900 border-l-4 border-emerald-500 pl-3 pr-6 mr-2': message.role === 'assistant',
+                'bg-orange-900/50 border-r-4 border-orange-500 pr-3 pl-6 ml-2': message.role === 'user'
+            }" class="py-3 rounded-lg relative">
+                <div class="font-bold text-sm tracking-wider mb-1 flex items-center"
+                     :class="{
+                         'text-emerald-300': message.role === 'assistant',
+                         'text-orange-300': message.role === 'user'
+                     }">
+                    <span x-text="message.role === 'user' ? 'You' : 'AI'"></span>
+                    <span class="ml-2 text-xs opacity-70" x-text="new Date().toLocaleTimeString()"></span>
+                </div>
+                <div class="text-sm text-white/90" x-text="message.content"></div>
+                <div :class="{
+                    'right-2 text-emerald-400/50': message.role === 'assistant',
+                    'left-2 text-orange-400/50': message.role === 'user'
+                }" class="absolute top-3 text-xs">
+                    <i :class="message.role === 'assistant' ? 'fa-robot' : 'fa-user'" class="fas"></i>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+        <!-- Input Area -->
+        <div class="flex mb-4">
+            <input x-model="chatInput"
+                   @keyup.enter="sendChatMessage"
+                   type="text"
+                   placeholder="Type your message..."
+                   class="flex-grow bg-navy-blue-800 border border-navy-blue-600 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white/90 placeholder-navy-blue-400">
+            <button @click="sendChatMessage"
+                    class="bg-emerald-700 hover:bg-emerald-600 border border-emerald-600 text-white px-4 py-2 rounded-r-lg font-bold tracking-wider transition-colors">
+                <i class="fas fa-paper-plane mr-2"></i>Send
+            </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-4">
+            <button @click="alert('Settings button clicked')"
+                    class="flex items-center bg-navy-blue-800 hover:bg-navy-blue-700 border border-navy-blue-700 text-emerald-300 px-4 py-2 rounded-lg font-medium tracking-wide transition-colors">
+                <i class="fas fa-cog mr-2"></i>Settings
+            </button>
+            <button @click="alert('Select Model button clicked')"
+                    class="flex items-center bg-navy-blue-800 hover:bg-navy-blue-700 border border-navy-blue-700 text-orange-300 px-4 py-2 rounded-lg font-medium tracking-wide transition-colors">
+                <i class="fas fa-robot mr-2"></i>Model
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Additional styling for the chat panel */
+    .panel {
+        transition: all 0.3s ease;
+    }
+    
+    .panel.active {
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+    }
+    
+    /* Scrollbar styling */
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 3px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.5);
+        border-radius: 3px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.7);
+    }
+    
+    /* Input focus effect */
+    input:focus {
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Button hover effects */
+    button:hover {
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+    }
+</style>
+
+                <!-- Resize Handle -->
+                <div
+                    class="resize-handle hidden lg:block px-1 mx-2"
+                    @mousedown="startResize('chatPanel', 'editorPanel', $event)"
+                    @touchstart="startResize('chatPanel', 'editorPanel', $event)"></div>
+
+                <!-- Editor Panel -->
+                <div
+                    class="panel flex flex-col h-full lg:flex-grow lg:min-w-[300px]"
+                    x-show="activeMobileTab === 'editor' || activeMobileTab === 'all'"
+                    x-ref="editorPanel">
+                    <!-- Editor Tabs -->
+                    <div class="flex border-b border-navy-blue-800 mb-2">
+                        <button
+                            @click="activeEditorTab = 'html'"
+                            :class="{
+                            'text-orange-500 border-b-2 border-orange-500 font-bold': activeEditorTab === 'html',
+                            'text-navy-blue-300 hover:text-navy-blue-100': activeEditorTab !== 'html'
+                        }"
+                            class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                            HTML
+                        </button>
+                        <button
+                            @click="activeEditorTab = 'css'"
+                            :class="{
+                            'text-orange-500 border-b-2 border-orange-500 font-bold': activeEditorTab === 'css',
+                            'text-navy-blue-300 hover:text-navy-blue-100': activeEditorTab !== 'css'
+                        }"
+                            class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                            CSS
+                        </button>
+                        <button
+                            @click="activeEditorTab = 'js'"
+                            :class="{
+                            'text-orange-500 border-b-2 border-orange-500 font-bold': activeEditorTab === 'js',
+                            'text-navy-blue-300 hover:text-navy-blue-100': activeEditorTab !== 'js'
+                        }"
+                            class="tab-button px-4 py-2 text-sm tracking-wider focus:outline-none">
+                            JavaScript
+                        </button>
+                    </div>
+
+                    <!-- Editor Content -->
+                    <div
+                        class="flex-grow bg-navy-blue-900 rounded-lg overflow-hidden border border-navy-blue-700">
+                        <textarea
+                            x-show="activeEditorTab === 'html'"
+                            x-model="htmlCode"
+                            @input="updateIframe"
+                            class="w-full h-full bg-navy-blue-900 text-navy-blue-100 p-4 font-mono text-sm focus:outline-none resize-none"
+                            placeholder="Enter HTML code here..."></textarea>
+                        <textarea
+                            x-show="activeEditorTab === 'css'"
+                            x-model="cssCode"
+                            @input="updateIframe"
+                            class="w-full h-full bg-navy-blue-900 text-navy-blue-100 p-4 font-mono text-sm focus:outline-none resize-none"
+                            placeholder="Enter CSS code here..."></textarea>
+                        <textarea
+                            x-show="activeEditorTab === 'js'"
+                            x-model="jsCode"
+                            @input="updateIframe"
+                            class="w-full h-full bg-navy-blue-900 text-navy-blue-100 p-4 font-mono text-sm focus:outline-none resize-none"
+                            placeholder="Enter JavaScript code here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Resize Handle -->
+                <div
+                    class="resize-handle hidden lg:block px-1 mx-2"
+                    @mousedown="startResize('editorPanel', 'viewerPanel', $event)"
+                    @touchstart="startResize('editorPanel', 'viewerPanel', $event)"></div>
+
+                <!-- Viewer Panel -->
+                <div
+                    class=" flex-grow h-full lg:w-1/3 lg:min-w-[300px]"
+                    x-show="activeMobileTab === 'viewer' || activeMobileTab === 'all'"
+                    x-ref="viewerPanel">
+                    <div
+                        class="bg-white rounded-lg overflow-hidden border-2 text-gray-800 font-3xl border-orange-500 h-full">
+                        <div
+                            x-html="iframeContent"
+                            class="mx-2 lg:mx-0 w-full h-full"
+                            frameborder="0">
+
+                            <h4 class="font-3xl text-gray-800"> Does Not Work
+                                atm </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('app', () => ({
+                activeMobileTab: 'ai-chat',
+                activeEditorTab: 'html',
+                
+                // Chat
+                chatInput: '',
+                chatMessages: [
+                    { role: 'assistant', content: 'Hello! How can I help you today?' }
+                ],
+                
+                // Editor
+                htmlCode: '<div class="p-4">\n  <h1 class="text-2xl font-bold">Hello World!</h1>\n  <p class="mt-2">Edit this code in the editor tab.</p>\n</div>',
+                cssCode: 'body { font-family: Arial, sans-serif; padding: 20px; }\nh1 { color: #f97316; }',
+                jsCode: 'console.log("JavaScript is working!");\n\ndocument.querySelector("h1").addEventListener("click", () => {\n  alert("You clicked the heading!");\n});',
+                
+                init() {
+                    // set view to all if desktop
+                    if (window.innerWidth >= 1024) {
+                        this.activeMobileTab = 'all';
+                    }
+                },
+                
+                // Computed
+                get iframeContent() {
+                    return `
+                        <!DOCTYPE html>
+                        <html>
+                            <head>
+                                <style>${this.cssCode}</style>
+                            </head>
+                            <body>
+                                <h4> Does Not Work atm </h4>
+                                <script>${this.jsCode}<\/script>
+                            </body>
+                        </html>
+                    `;
+                },
+                
+                // Methods
+                sendChatMessage() {
+                    if (!this.chatInput.trim()) return;
+                    
+                    this.chatMessages.push({
+                        role: 'user',
+                        content: this.chatInput
+                    });
+                    
+                    // Simulate AI response
+                    setTimeout(() => {
+                        this.chatMessages.push({
+                            role: 'assistant',
+                            content: `I received your message: "${this.chatInput}". This is a simulated response.`
+                        });
+                        
+                        // Scroll to bottom of chat
+                        this.$nextTick(() => {
+                            this.$refs.chatDisplay.scrollTop = this.$refs.chatDisplay.scrollHeight;
+                        });
+                    }, 500);
+                    
+                    this.chatInput = '';
+                },
+                
+                updateIframe() {
+                    // The iframe will automatically update because it's bound to iframeContent
+                    // which is a computed property that depends on htmlCode, cssCode, and jsCode
+                },
+                
+                startResize(leftPanelRef, rightPanelRef, event) {
+                    event.preventDefault();
+                    
+                    const leftPanel = this.$refs[leftPanelRef];
+                    const rightPanel = this.$refs[rightPanelRef];
+                    const handle = event.target;
+                    
+                    handle.classList.add('active');
+                    
+                    const startX = event.type === 'mousedown' ? event.clientX : event.touches[0].clientX;
+                    const leftWidth = leftPanel.offsetWidth;
+                    const rightWidth = rightPanel.offsetWidth;
+                    
+                    const doDrag = (moveEvent) => {
+                        const currentX = moveEvent.type === 'mousemove' ? moveEvent.clientX : moveEvent.touches[0].clientX;
+                        const dx = currentX - startX;
+                        
+                        const newLeftWidth = leftWidth + dx;
+                        const newRightWidth = rightWidth - dx;
+                        
+                        if (newLeftWidth > 200 && newRightWidth > 200) {
+                            leftPanel.style.width = `${newLeftWidth}px`;
+                            rightPanel.style.width = `${newRightWidth}px`;
+                        }
+                    };
+                    
+                    const stopDrag = () => {
+                        handle.classList.remove('active');
+                        document.removeEventListener('mousemove', doDrag);
+                        document.removeEventListener('touchmove', doDrag);
+                        document.removeEventListener('mouseup', stopDrag);
+                        document.removeEventListener('touchend', stopDrag);
+                    };
+                    
+                    document.addEventListener('mousemove', doDrag);
+                    document.addEventListener('touchmove', doDrag);
+                    document.addEventListener('mouseup', stopDrag);
+                    document.addEventListener('touchend', stopDrag);
+                }
+            }));
+        });
+    </script>
+    </body>
+</html>
